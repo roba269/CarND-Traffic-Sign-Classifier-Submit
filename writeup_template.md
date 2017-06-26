@@ -14,15 +14,10 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[new_image1]: ./images/1.png "Traffic Sign 1"
-[new_image2]: ./images/2.png "Traffic Sign 2"
-[new_image3]: ./images/3.png "Traffic Sign 3"
-[new_image4]: ./images/4.png "Traffic Sign 4"
-[new_image5]: ./images/5.png "Traffic Sign 5"
-
-[image1]: ./examples/visualization.jpg "Visualization"
-[image2]: ./examples/grayscale.jpg "Grayscaling"
-[image3]: ./examples/random_noise.jpg "Random Noise"
+[new_images]: ./images/new_images.png "new images"
+[categories]: ./images/categories.png "Samle images for each category"
+[distribution]: ./images/distribution.png "Count for each cateogory"
+[rotation]: ./images/rotation.png "Ratated Images"
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
@@ -48,10 +43,15 @@ I used the numpy library to calculate summary statistics of the traffic signs da
 
 #### 2. Include an exploratory visualization of the dataset.
 
-// TODO
-Here is an exploratory visualization of the data set. It is a bar chart showing how the data ...
+Firstly I picked one example from each category, to get an intuitive idea about what these images look like:
 
-![alt text][image1]
+![categories][categories]
+
+Then I drew a bar chart about the number of images for each category:
+
+![distribution][distribution]
+
+We can see it's not evenly distributed. So possibly it will be helpful to adding more augmented data to make it an even distribution.
 
 ### Design and Test a Model Architecture
 
@@ -59,28 +59,37 @@ Here is an exploratory visualization of the data set. It is a bar chart showing 
 
 Firstly, I converted the images to grayscale by averaging the three channels, and normalized the images by simply `(X - 128) / 128`.
 
-Since some categories contain fewer images than enough, I think it's a good idea to do some image augmentation. The augementation methods I tried was left-right flipping and rotating by a small random angle. Turns out that flipping doesn't help. I think the reason is if some signs are flipped, the meanings are really changed, for example, left-turn signal vs. right-turn signal. On the otherhand, add more slightly rotated images did help a lot.
+Since some categories contain very few images, I think it's a good idea to do some image augmentation. The augementation methods I tried was left-right flipping and rotating by a small random angle. Turns out that flipping doesn't help. I think the reason is if some signs are flipped, the meanings are really changed, for example, left-turn signal vs. right-turn signal. On the otherhand, add more slightly rotated images did help a lot.
 
 See below for rotated examples: 
 
+![rotation][rotation]
+
+I generated 3 additional rotated images for each original image, so the size of training set changed from 34799 to 139196. The distribution kept same. (But I think an evenly distribution may be better.)
+
 #### 2. Describe what your final model architecture looks like including model type, layers, layer sizes, connectivity, etc.) Consider including a diagram and/or table describing the final model.
 
-// TODO
-My final model consisted of the following layers:
+My final model is as following:
 
-| Layer         		|     Description	        					| 
+| Layer         		      |     Description	        					| 
 |:---------------------:|:---------------------------------------------:| 
-| Input         		| 32x32x3 RGB image   							| 
-| Convolution 3x3     	| 1x1 stride, same padding, outputs 32x32x64 	|
-| RELU					|												|
-| Max pooling	      	| 2x2 stride,  outputs 16x16x64 				|
-| Convolution 3x3	    | etc.      									|
-| Fully connected		| etc.        									|
-| Softmax				| etc.        									|
-|						|												|
-|						|												|
- 
+| Input         		      | 32x32x1 Greyscale image   							| 
+| Convolution 5x5     	 | 1x1 stride, valid padding, outputs 28x28x6 	|
+| RELU					             |												|
+| Max pooling	      	   | 2x2 stride, valid padding, outputs 14x14x6 				|
+| Convolution 5x5	      | 1x1 stride, valid padding, outputs 10x10x16    |
+| RELU					             |												|
+| Max pooling	      	   | 2x2 stride, valid padding, outputs 5x5x16  				|
+| Fully connected		     | 400 => 120       |
+| RELU					             |												|
+| Dropout               | with 50% keep | 
+| Fully connected		     | 120 => 84       |
+| RELU					             |												|
+| Dropout               | with 50% keep | 
+| Fully connected		     | 84 => 43       |
+| Softmax				|        									|
 
+Initally I didn't add the dropout. Then I noticed there was an overfitting - very high accuracy on training set but not so good on validation set. After adding dropout after fc layer to mitigate the overfitting, things got much better.
 
 #### 3. Describe how you trained your model. The discussion can include the type of optimizer, the batch size, number of epochs and any hyperparameters such as learning rate.
 
@@ -93,64 +102,75 @@ My final model results were:
 * validation set accuracy of 0.974
 * test set accuracy of 0.950
 
-// TODO all below
-If an iterative approach was chosen:
-* What was the first architecture that was tried and why was it chosen?
-* What were some problems with the initial architecture?
-* How was the architecture adjusted and why was it adjusted? Typical adjustments could include choosing a different model architecture, adding or taking away layers (pooling, dropout, convolution, etc), using an activation function or changing the activation function. One common justification for adjusting an architecture would be due to overfitting or underfitting. A high accuracy on the training set but low accuracy on the validation set indicates over fitting; a low accuracy on both sets indicates under fitting.
-* Which parameters were tuned? How were they adjusted and why?
-* What are some of the important design choices and why were they chosen? For example, why might a convolution layer work well with this problem? How might a dropout layer help with creating a successful model?
+I used the LeNet architecture from the course matrials before this project, because I think the image size (32x32) fits very well, and the complexity of both task (digit recognition vs traffic sign classifaction) is comparable.
 
-If a well known architecture was chosen:
-* What architecture was chosen?
-* Why did you believe it would be relevant to the traffic sign application?
-* How does the final model's accuracy on the training, validation and test set provide evidence that the model is working well?
- 
+As mentioned above, I noticed the original model got almost 100% accurary on training set, but stuck on 80+% on validation set after a few epochs, which may indicates an overfitting. So I added two dropout layers after the full-connected layers, and it worked very well.
+
+Originally I tried 10 epochs, but then I found the accuracy still kept increasing at the 10th epoch. So I extended it to 20 epochs to get a better final result.  
 
 ### Test a Model on New Images
 
 #### 1. Choose five German traffic signs found on the web and provide them in the report. For each image, discuss what quality or qualities might be difficult to classify.
 
-Here are five German traffic signs that I found on the web (without resizing):
+Here are five German traffic signs that I found on the web (after resizing):
 
-![new image1][new_image1] ![new image2][new_image2] ![new image3][new_image3] 
-![new image4][new_image4] ![new image5][new_image5]
+![new images][new_images]
 
-The first image might be difficult to classify because ...
+I thought they are all not very difficult, no obstacle, no blur, etc. But interestingly the model misclassified the "60 km/h" sign.
 
-####2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
+#### 2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
 
 Here are the results of the prediction:
 
 | Image			        |     Prediction	        					| 
 |:---------------------:|:---------------------------------------------:| 
-| Stop Sign      		| Stop sign   									| 
-| U-turn     			| U-turn 										|
-| Yield					| Yield											|
-| 100 km/h	      		| Bumpy Road					 				|
-| Slippery Road			| Slippery Road      							|
+| 60 km/h      		| 30 km/h   									| 
+| Right-of-way     			| Right-of-way 										|
+| Stop					| Stop											|
+| Bumpy Road	      		| Bumpy Road					 				|
+| Children	Crossing		| Children Crossing      							|
 
+The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. The model mistakenly consider the 60 km/h sign as 30 km/h. I think we can dive into it, analyzing if the model is really doing worse on the speed number sign on validation set. If so, we can try to add more data for these categories.
 
-The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. This compares favorably to the accuracy on the test set of ...
+#### 3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
 
-####3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
+The code for making predictions on my final model is located in the 14th cell of the Ipython notebook.
 
-The code for making predictions on my final model is located in the 11th cell of the Ipython notebook.
+For all the images, the model is pretty sure. I listed the top 5 categories for each image:
 
-For the first image, the model is relatively sure that this is a stop sign (probability of 0.6), and the image does contain a stop sign. The top five soft max probabilities were
+```
+Image 0:
+ 0.99981: Speed limit (30km/h)
+ 0.00013: Right-of-way at the next intersection
+ 0.00004: Priority road
+ 0.00001: Roundabout mandatory
+ 0.00001: Speed limit (50km/h)
+Image 1:
+ 1.00000: Right-of-way at the next intersection
+ 0.00000: Pedestrians
+ 0.00000: General caution
+ 0.00000: Priority road
+ 0.00000: End of no passing by vehicles over 3.5 metric tons
+Image 2:
+ 0.95379: Stop
+ 0.04591: Turn left ahead
+ 0.00014: Speed limit (60km/h)
+ 0.00009: Ahead only
+ 0.00002: Keep right
+Image 3:
+ 0.99999: Bumpy road
+ 0.00001: Bicycles crossing
+ 0.00000: Traffic signals
+ 0.00000: Road work
+ 0.00000: Children crossing
+Image 4:
+ 0.99981: Children crossing
+ 0.00019: Beware of ice/snow
+ 0.00000: Right-of-way at the next intersection
+ 0.00000: Slippery road
+ 0.00000: Dangerous curve to the right
+```
 
-| Probability         	|     Prediction	        					| 
-|:---------------------:|:---------------------------------------------:| 
-| .60         			| Stop sign   									| 
-| .20     				| U-turn 										|
-| .05					| Yield											|
-| .04	      			| Bumpy Road					 				|
-| .01				    | Slippery Road      							|
-
-
-For the second image ... 
-
-### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
-####1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
+It's kind of surprising that the model gave a wrong prediction for the first image confidently, which may suggest this model is really doing not good on the speed number.
 
 

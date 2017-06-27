@@ -130,7 +130,9 @@ Here are the results of the prediction:
 | Bumpy Road	      		| Bumpy Road					 				|
 | Children	Crossing		| Children Crossing      							|
 
-The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. The model mistakenly consider the 60 km/h sign as 30 km/h. I think we can dive into it, analyzing if the model is really doing worse on the speed number sign on validation set. If so, we can try to add more data for these categories.
+The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. It is lower than the accuracy on test set (95.0%), which means the model might be overfitting.
+
+The model mistakenly consider the 60 km/h sign as 30 km/h. I think we can dive into it, analyzing if the model is really doing worse on the speed number sign on validation set. If so, we can try to add more data for these categories.
 
 #### 3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
 
